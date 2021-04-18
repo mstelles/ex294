@@ -1,4 +1,4 @@
-## Personal stuff created to prepare to my EX294 [1] exam.
+## Personal stuff created to prepare to my [EX294](https://www.redhat.com/en/services/training/ex294-red-hat-certified-engineer-rhce-exam-red-hat-enterprise-linux-8)  exam.
 
 Feel free to use if you like but don't take this as a course for the certification.
 
@@ -184,9 +184,11 @@ ansible -b -m copy -a "dest=/etc/motd content='Ansible managed host'"
   - Repo 2: name "AppStream", description "DNF AppStream Repo", baseurl "file:///srv/AppStream", gpgcheck "1", gpgkey "/etc/pki/rpm-gpg/RPM-GPG-KEY-centosofficial", enabled "1"
 
 Solution:
+```
 ansible all -b -m mount -a "path=/srv src=/dev/cdrom fstype=iso9660 state=mounted"
 ansible all -b -m yum_repository -a "name='BaseOS' description='DNF BaseOS repo' baseurl='file:///srv/BaseOS' gpgcheck='1' gpgkey='/etc/pki/rpm-gpg/RPM-GPG-KEY-centosofficial' enabled='1'"
 ansible all -b -m yum_repository -a "name='AppStream' description='DNF AppStream repo' baseurl='file:///srv/AppStream' gpgcheck='1' gpgkey='/etc/pki/rpm-gpg/RPM-GPG-KEY-centosofficial' enabled='1'"
+```
 
 #### - Tasks using playbooks and ad-hoc commands
 
@@ -210,8 +212,8 @@ ansible -b webservers m shell -a 'ss -natp | grep *:80'
 
 b. testing db servers
 ```
-ansible -b webservers m shell -a 'ss -natp | grep *:3306'
-ansible -o -m mysql_info -a "login_user=root filter=version" prod
+ansible -b prod m shell -a 'ss -natp | grep *:3306'
+ansible prod -o -m mysql_info -a "login_user=root filter=version"
 ```
 OBS.: to use the mysql_info module, you must have PyMySQL installed on the nodes
 
