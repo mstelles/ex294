@@ -1,0 +1,10 @@
+---
+- hosts: prod1
+  become: true
+  gather_facts: false
+  tasks:
+    - name: update all packages on prod1 hosts
+      yum:
+        name: '*'
+        state: latest
+...

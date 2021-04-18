@@ -1,0 +1,54 @@
+---
+- hosts: webservers
+  become: true
+  gather_facts: true
+  tasks:
+    - name: create /var/web/html directory
+      file:
+        path: /var/web/html
+        state: directory
+    - name: adjust SE context on the directory
+      sefcontext:
+        target: "/var/web/html(/.*)?"
+        setype: "httpd_sys_content_t"
+        state: present
+    - name: apply the context to the filesystem
+      command: restorecon -irv /var/web/html
+    - name: adjust httpd DocumentRoot config
+      lineinfile:
+        backup: true
+        path: /etc/httpd/conf/httpd.conf
+        regexp: "^DocumentRoot"
+        line: 'DocumentRoot "/var/web/html"' 
+      notify: restart httpd
+    - name: adjust the permissions for DocumentRoot
+      lineinfile:
+        backup: true
+        path: /etc/httpd/conf/httpd.conf
+        regexp: '<Directory "/var/www/html">'
+        line: '<Directory "/var/web/html">'
+      notify: restart httpd
+    - name: create a custom index.html file
+      copy:
+        dest: /var/web/html/index.html
+        content: "<b>{{inventory_hostname}}</b> host - managed by anisble<br>
+                  <b> Total CPU cores:</b> {{ansible_facts['processor_cores']}}<br>
+                  <b> Total mem:</b> {{ansible_facts['memtotal_mb']}}MiB<br>
+                  <b> IP:</b>{{ansible_facts['default_ipv4']['address']}}<br>
+                  <b> Distribution:</b> {{ansible_facts['distribution']}} {{ansible_facts['distribution_version']}}<br>"
+    - name: allow inbount http traffic
+      firewalld:
+        service: http
+        permanent: true
+        state: enabled
+      notify: restart firewalld
+  handlers:
+    - name: restart httpd
+      service:
+        name: httpd
+        state: restarted
+    - name: restart firewalld
+      service:
+        name: firewalld
+        state: restarted
+...

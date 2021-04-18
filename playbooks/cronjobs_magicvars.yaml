@@ -1,0 +1,19 @@
+---
+- hosts: all
+  become: true
+  gather_facts: false
+  tasks:
+    - cron:
+        name: restart rsyslog
+        minute: "0"
+        hour: "6,23"
+        job: "systemctl restart rsyslog"
+      when: inventory_hostname in groups['prod']
+    - cron:
+        name: restart rsyslog
+        minute: "0"
+        hour: "2"
+        weekday: "1"
+        job: "systemctl restart rsyslog"
+      when: inventory_hostname in groups['webservers']
+...

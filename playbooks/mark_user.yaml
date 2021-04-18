@@ -1,0 +1,10 @@
+---
+- hosts: all
+  become: true
+  gather_facts: false
+  tasks:
+    - name: create mark user
+      user:
+        name: mark
+        password: "{{'password' | password_hash('sha512')}}"
+...

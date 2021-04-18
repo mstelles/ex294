@@ -1,0 +1,16 @@
+---
+- hosts: webservers
+  become: true
+  gather_facts: false
+  tasks:
+    - name: archive /etc from webservers
+      archive:
+        path: /etc
+        dest: "/root/{{inventory_hostname}}-etc.tar.bz2"
+        format: bz2
+    - name: copy the file to local tmp directory
+      fetch:
+        src: "/root/{{inventory_hostname}}-etc.tar.bz2"
+        dest: "/tmp/{{inventory_hostname}}-etc.tar.bz2"
+        flat: true
+...

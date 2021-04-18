@@ -1,0 +1,28 @@
+---
+- hosts: webservers
+  become: true
+  gather_facts: false
+  tasks:
+    - name: install httpd on webservers
+      yum:
+        name: httpd
+        state: latest
+    - name: start and enable httpd on webservers
+      service:
+        name: httpd
+        state: started
+        enabled: true
+- hosts: prod
+  become: true
+  gather_facts: false
+  tasks:
+    - name: install mariadb on prod servers
+      yum:
+        name: mariadb-server
+        state: latest
+    - name: start and enable mariadb on prod servers
+      service:
+        name: mariadb
+        state: started
+        enabled: true
+...
