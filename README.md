@@ -41,6 +41,7 @@ Feel free to use if you like but don't take this as a course for the certificati
     - The filter option will work only for second level variables and further values would be ignored. This only applies when running ad-hoc commands. During playbook execution this restriction doesn't exist.
 
 Ex:
+This will show the 'ansible_default_ipv4' dictionary.
 ```
 $ ansible -b mhost1 -m setup -a 'gather_subset=network filter=ansible_default_ipv4'
 mhost1 | SUCCESS => {
@@ -62,8 +63,8 @@ mhost1 | SUCCESS => {
     "changed": false
 
 ```
-This will show the 'ansible_default_ipv4' dictionary.
 
+This won't return any fact.
 ```
 $ ansible -b mhost1 -m setup -a 'gather_subset=network filter=ansible_default_ipv4.address'
 mhost1 | SUCCESS => {
@@ -73,7 +74,6 @@ mhost1 | SUCCESS => {
     "changed": false
 }
 ```
-This won't return any fact.
 
 ### ========== tasks ==========
 
