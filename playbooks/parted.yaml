@@ -1,0 +1,32 @@
+---
+- hosts: all
+  become: true
+  gather_facts: false
+  tasks:
+    - name: gather info from /dev/sda
+      parted:
+        unit: MiB
+        device: /dev/sda
+      register: sda_info
+    - name: create the extended partition
+      parted:
+        unit: MiB
+        device: /dev/sda
+        number: "4"
+        state: present
+        part_type: extended
+        part_start: "{{sda_info.partitions[2].end + 1}}MiB"
+    - name: create a 200MiB logical partition
+      parted:
+        unit: MiB
+        device: /dev/sda
+        number: "5"
+        state: present
+        part_type: logical
+        part_start: "{{sda_info.partitions[2].end + 2}}MiB"
+        part_end: "{{sda_info.partitions[2].end + 202}}MiB"
+    - name: formating the /dev/sda5 partition as ext4
+      filesystem:
+        dev: /dev/sda5
+        fstype: ext4
+...

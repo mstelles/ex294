@@ -1,0 +1,18 @@
+---
+- hosts: all
+  become: true
+  gather_facts: false
+  tasks:
+    - name: create testing group on webservers
+      group:
+        name: testing
+        state: present
+        gid: 3030
+      when: inventory_hostname in groups['webservers']
+    - name: create networks group on prod nodes
+      group:
+        name: networks
+        state: present
+        gid: 4040
+      when: inventory_hostname in groups['prod']
+...
