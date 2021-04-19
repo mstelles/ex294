@@ -1,0 +1,44 @@
+---
+- hosts: all
+  become: true
+  gather_facts: false
+  vars_files:
+    - userdetails.yaml
+    - passwords.yaml
+  vars:
+    - separator: "_"
+  tasks:
+    - name: create users on webservers when department is software developer. assign the user to testing group.
+      user:
+        name: "{{item.username}}"
+        password: "{{ userpass | password_hash('sha512') }}"
+        group: testing
+        append: true
+      when: 
+        - item.department == 'software developer'
+        - inventory_hostname in groups['webservers']
+      loop: "{{users}}"
+      vars:
+        - userpass: "{{ all_users_pass + separator + item.username }}"
+    - name: create users on prod nodes when department is testing. assign the user to networks group.
+      user:
+        name: "{{item.username}}"
+        password: "{{ userpass | password_hash('sha512') }}"
+        group: networks
+        append: true
+      when:
+        - item.department == 'testing'
+        - inventory_hostname in groups['prod']
+      loop: "{{users}}"
+      vars:
+        - userpass: "{{ all_users_pass + separator + item.username }}"
+    - name: create users on all nodes when department is hr.
+      user:
+        name: "{{item.username}}"
+        password: "{{ userpass | password_hash('sha512') }}"
+      when:
+        - item.department == 'hr'
+      loop: "{{users}}"
+      vars:
+        - userpass: "{{ all_users_pass + separator + item.username }}"
+...

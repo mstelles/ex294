@@ -39,6 +39,12 @@ Feel free to use if you like but don't take this as a course for the certificati
     - Use the -b option to gather all variables, when needed.
     - Consider using 'gather_subset' when possible, this will create less overhead on the execution.
     - The filter option will work only for second level variables and further values would be ignored. This only applies when running ad-hoc commands. During playbook execution this restriction doesn't exist.
+  - When running playbooks, keep in mind the options:
+    - --syntax-check
+    - --step
+    - --start-at-task
+    - --force-handlers
+    - --list-tasks
 
 Ex:
 
@@ -91,6 +97,7 @@ mhost1 | SUCCESS => {
   - Ansible should start 5 forks
 
 Solution: [ansible.cfg](ansible.cfg)
+
 Test (check the 'config file' line):
 ```bash
 $ ansible --version
@@ -103,6 +110,8 @@ $ ansible --version
   - prod1 and prod2 must be part of prod group
   - group linux should include all managed hosts
 
+Solution: [mnodes](mnodes)
+
 Test:
 ```bash
 $ ansible --list prod
@@ -111,6 +120,8 @@ $ ansible --list linux
 $ ansible --list all
 $ ansible -u root -k -m ping all -o
 ```
+
+#### - Tasks using only ad-hoc commands
 
 #### 3. Configure mhost4 to listen on non-default ssh port 555
   - ansible should connect to the other hosts on port 22
@@ -151,7 +162,9 @@ Solution:
 ```bash
 $ ansible -u root -k all -m user -a "name=ansible password='{{'123' | password_hash('sha512')}}'"
 $ ansible -u root -k all -m authorized_key -a "user=ansible state=present key='{{ lookup('file', '/home/ansible/.ssh/id_rsa.pub') }}'"
+```
 OBS.: Another option to copy the key would be to use the 'copy' module
+```bash
 $ ansible -u root -k all -m lineinfile -a "path=/etc/sudoers insertbefore='## Read drop-in' line='ansible ALL=(ALL) NOPASSWD: ALL'"
 ```
 
@@ -161,8 +174,6 @@ $ ansible -m ping all -o
 ```
 
 --- from this point onwards, use 'ansible' user
-
-#### - Tasks using only ad-hoc commands
 
 #### 5. Configuring MOTD with ad-hoc commands
 Add the text:
@@ -197,7 +208,7 @@ $ ansible all -b -m yum_repository -a "name='AppStream' description='DNF AppStre
   - Install, start and enable httpd on webservers;
   - Install, start and enable mariadb on prod;
 
-Solution: playbooks/services.yaml
+Solution: [services.yaml](playbooks/services.yaml)
 ```bash
 $ ansible-playbook playbooks/services.yaml --syntax-check
 $ ansible-playbook playbooks/services.yaml
@@ -221,7 +232,7 @@ OBS.: to use the mysql_info module, you must have PyMySQL installed on the nodes
 #### 8. Create a user on all managed nodes via playbook (mark_user.yaml)
   - Username 'mark', password 'password', sha512
 
-Solution: playbooks/mark_user.yaml
+Solution: [mark_user.yaml](playbooks/mark_user.yaml)
 ```bash
 $ ansible-playbook playbooks/mark_user.yaml --syntax-check
 $ ansible-playbook playbooks/mark_user.yaml
@@ -232,7 +243,7 @@ $ ansible-playbook playbooks/mark_user.yaml
   - User rwx, group rw, others no permission
   - Set gid bit
 
-Solution: playbooks/mark_file.yaml
+Solution: [mark_file.yaml](playbooks/mark_file.yaml)
 ```bash
 $ ansible-playbook playbooks/mark_file.yaml --syntax-check
 $ ansible-playbook playbooks/mark_file.yaml
@@ -264,7 +275,7 @@ $ ansible -b -a "cat /root/file1.txt"
   - Compress with bzip2
   - Copy the files to the local /tmp directory on the ansible controler
 
-Solution: playbooks/archive.yaml
+Solution: [archive.yaml](playbooks/archive.yaml)
 ```bash
 $ ansible-playbook playbooks/archive.yaml --syntax-check
 $ ansible-playbook playbooks/archive.yaml
@@ -280,7 +291,7 @@ ls -l /tmp/*etc.tar.bz2
   - Restart rsyslog service at 23h and 6h on prod nodes every day
   - Restart rsyslog service at 2h on webservers on every monday
 
-Solution: playbooks/cronjobs.yaml
+Solution: [cronjobs.yaml](playbooks/cronjobs.yaml)
 ```bash
 $ ansible-playbook playbooks/cronjobs.yaml --syntax-check
 $ ansible-playbook playbooks/cronjobs.yaml
@@ -295,7 +306,7 @@ $ ansible -b all -a 'crontab -l'
 
 #### 13. Create the 'update_prod1.yaml' playbook to update all packages on prod1 node
 
-Solution: playbooks/update_prod1.yaml
+Solution: [update_prod1.yaml](playbooks/update_prod1.yaml)
 ```bash
 $ ansible-playbook playbooks/update_prod1.yaml --syntax-check
 $ ansible-playbook playbooks/update_prod1.yaml
@@ -315,7 +326,7 @@ $ ansible -b all -a 'crontab -l'
   - Reload both services by making usage of handlers
   - Playbook should be executed on webservers only
 
-Solution: playbooks/httpd_configs.yaml
+Solution: [httpd_configs.yaml](playbooks/httpd_configs.yaml)
 ```bash
 $ ansible-playbook playbooks/httpd_configs.yaml --syntax-check
 $ ansible-playbook playbooks/httpd_configs.yaml 
@@ -333,7 +344,7 @@ $ ansible webservers -b -a 'ls -lZd /var/web'
   - Create group 'networks' on prod nodes, gid=4040
   - Use magic variables to diferentiate between the groups
 
-Solution: playbooks/create_testing_networks_groups.yaml
+Solution: [create_testing_networks_groups.yaml](playbooks/create_testing_networks_groups.yaml)
 ```bash
 $ ansible-playbook playbooks/create_testing_networks_groups.yaml --syntax-check
 $ ansible-playbook playbooks/create_testing_networks_groups.yaml 
@@ -349,9 +360,8 @@ $ ansible webservers -a 'grep ^testing\: /etc/group'
   - Create an extended partition on all managed nodes
   - Use all remaining space for extended partition
   - Create one logical partition of size 200 MB on all managed nodes
-  - Format this partion as ext4
 
-Solution: playbooks/parted.yaml
+Solution: [parted.yaml](playbooks/parted.yaml)
 ```bash
 $ ansible-playbook playbooks/parted.yaml --syntax-check
 $ ansible-playbook playbooks/parted.yaml
@@ -364,9 +374,21 @@ $ ansible -b -m parted -a 'device=/dev/sda5 unit=MiB' all
 ```
 #### 17. Create the 'mount.yaml' playbook to:
   - Format the '/dev/sda5' device with 'ext4' fs
-  - Create /mnt/partition
-  - Mount the fs in /mnt/partition
-  - Add entry to fstab
+  - Create /opt/tmp
+  - Mount the fs in /opt/tmp
+  - Make sure to add entry to fstab
+
+Solution: [mount.yaml](playbooks/mount.yaml)
+```bash
+$ ansible-playbook playbooks/mount.yaml --syntax-check
+$ ansible-playbook playbooks/mount.yaml
+```
+
+Tests:
+```bash
+$ ansible all -a 'grep /opt/tmp /etc/fstab'
+$ ansible all -a 'df /opt/tmp'
+```
 
 #### 18. Create the 'file.sh' shell script to execute the following tasks using ad-hoc commands:
   - Create the '/root/redhat/ex294/results' file on prod nodes
@@ -374,31 +396,91 @@ $ ansible -b -m parted -a 'device=/dev/sda5 unit=MiB' all
   - Set mark as owner and group
   - Create a symbolic link in /root with the default name
 
+Solution: [file.sh](scripts/file.sh)
+```bash
+$ bash scripts/file.sh
+```
+
+Tests:
+```bash
+$ ansible prod -b -a 'find /root -name results -ls'
+```
+
 #### 19. Create the 'user.sh' shell script to execute the following tasks using ad-hoc commands:
   - Create user 'rhce' on all nodes:
     - Password should be: 'rhce_pass' using sha512 to generate the password hash
     - UID: 2021
   - Create the 'ex294' group, which should be a secondary group for the same user
 
+Solution: [user.sh](scripts/user.sh)
+```bash
+$ bash scripts/user.sh
+```
+
+Tests:
+```bash
+$ ansible all -k -u rhce -m ping
+$ ansible all -k -u rhce -a 'id'
+```
+
 #### 20. Create the 'motd_with_condition.yaml' playbook to configure motd on:
-  - webservers with "Welcome to webserver node\n"
-  - prod1 with "Welcome to mhost1'n"
-Set "hosts: all" in the play book as the selection should be made based on contitions.
+  - webservers with "This is a webserver node\n"
+  - prod1 with "This is a prod1 node\n"
+  - Set "hosts: all" in the play book as the selection must be made based on contitions.
+
+Solution: [motd_with_conditionals.yaml](playbooks/motd_with_conditionals.yaml)
+
+```bash
+$ ansible-playbook playbooks/motd_with_conditionals.yaml --syntax-check
+$ ansible-playbook playbooks/motd_with_conditionals.yaml
+```
+
+Tests:
+```bash
+$ ansible all -a "grep 'This is a' /etc/motd"
+```
 
 #### 21. Create the 'packages.yaml' playbook to install:
-  - samba on webservers
-  - nfs-utils on prod nodes
-Set "hosts: all" in the play book as the selection should be made based on contitions.
+  - httpd-manual on webservers
+  - mariadb-test on prod nodes
+  - Set "hosts: all" in the play book as the selection should be made based on contitions.
 
-#### 22: Create the 'firewall_config.yaml'playbook to:
+Solution: [packages_with_conditionals.yaml](playbooks/packages_with_conditionals.yaml)
+
+```bash
+$ ansible-playbook playbooks/packages_with_conditionals.yaml --syntax-check
+$ ansible-playbook playbooks/packages_with_conditionals.yaml
+```
+
+Tests:
+```bash
+$ ansible all -a 'rpm -q mariadb-test'
+$ ansible all -a 'rpm -q httpd-manual'
+```
+
+#### 22. Create the 'firewall_config.yaml'playbook to:
   - Configure webservers to accept https and ntp inbound traffic
-  - Configure prod nodes to accept traffic on port range 400-404/tcp
+  - Configure prod nodes to accept traffic on port range 400-404/tcp and 3306/tcp
   - Firewall rules should be persistent and service must be reloaded (don't use the immediate option on firewalld module).
-Set "hosts: all" in the play book as the selection should be made based on contitions.
+  - Set "hosts: all" in the play book as the selection should be made based on contitions.
 
-#### 23: Create the 'create_users.yaml' playbook to create users, based on:
+Solution: [firewall_config.yaml](playbooks/firewall_config.yaml)
+
+```bash
+$ ansible-playbook playbooks/firewall_config.yaml --syntax-check
+$ ansible-playbook playbooks/firewall_config.yaml
+```
+
+Tests:
+```bash
+$ ansible prod -b -a 'firewall-cmd --list-port'
+$ ansible webservers -b -a 'firewall-cmd --list-service'
+```
+
+#### 23. Create the 'create_users.yaml' playbook to create users, based on:
   - 'userdetails.yaml' should contain user information
-    - username, department, age
+    - username, department, age (below)
+```yaml
 ---
 users:
   - username: lisa
@@ -411,16 +493,27 @@ users:
     department: hr
     age: 28
 ...
-    - Dictionary name 'users'
+```
   - 'passwords.yaml' should contain the user passwords (format, user_password: passwords)
+```yaml
 ---
 all_users_pass: wadda
 ...
+```
   - Create users:
     - webservers when user's department is 'software developer', and assign 'testing' group as suplementary to it.
-    - prod nodes whe user's department is 'testing' and assign 'network' group as suplementary to it.
+    - prod nodes when user's department is 'testing' and assign 'network' group as suplementary to it.
     - all managed nodes when user's department is HR.
-    - The password should be the one defined on 'password.yaml'
+    - The password should be the one defined on 'password.yaml' adding '_username' to it (wadda_lara, to user lara for example)
+
+Solution: [create_users.yaml](playbooks/create_users.yaml)
+
+```bash
+$ ansible-playbook playbooks/create_users.yaml --syntax-check
+$ ansible-playbook playbooks/create_users.yaml
+```
+
+Tests: try to login to the nodes using the created users accordingly
 
 #### 24. Create the 'vgroup.yaml' playbook to:
   - Install lvm2 package on all nodes

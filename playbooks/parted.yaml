@@ -25,8 +25,4 @@
         part_type: logical
         part_start: "{{sda_info.partitions[2].end + 2}}MiB"
         part_end: "{{sda_info.partitions[2].end + 202}}MiB"
-    - name: formating the /dev/sda5 partition as ext4
-      filesystem:
-        dev: /dev/sda5
-        fstype: ext4
 ...

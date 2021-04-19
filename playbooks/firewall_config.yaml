@@ -1,0 +1,33 @@
+---
+- hosts: all
+  become: true
+  gather_facts: false
+  tasks:
+    - name: allow http inbound traffic on webservers
+      firewalld:
+        service: "{{item}}"
+        state: enabled
+        permanent: true
+      loop:
+        - https
+        - ntp
+      when:
+        - inventory_hostname in groups['webservers']
+      notify: restart firewalld
+    - name: allow 400-404/tcp and 3306/tcp inbound traffic on prod nodes
+      firewalld:
+        port: "{{item}}"
+        state: enabled
+        permanent: true
+      loop:
+        - 400-404/tcp
+        - 3306/tcp
+      when:
+        - inventory_hostname in groups['prod']
+      notify: restart firewalld
+  handlers:
+    - name: restart firewalld
+      service:
+        name: firewalld
+        state: restarted
+...

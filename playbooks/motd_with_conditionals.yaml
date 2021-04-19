@@ -1,0 +1,16 @@
+---
+- hosts: all
+  become: true
+  gather_facts: false
+  tasks:
+    - name: add content to motd on webservers
+      lineinfile:
+        path: /etc/motd
+        line: "This is a webserver node\n"
+      when: inventory_hostname in groups['webservers']
+    - name: add content to motd on prod1 nodes
+      lineinfile:
+        path: /etc/motd
+        line: "This is a prod1 node\n"
+      when: inventory_hostname in groups['prod1']
+...

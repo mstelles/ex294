@@ -1,0 +1,18 @@
+---
+- hosts: all
+  become: true
+  gather_facts: false
+  tasks:
+    - name: install httpd-manual on webservers
+      yum:
+        name: httpd-manual
+        state: latest
+      when: 
+        - inventory_hostname in groups['webservers']
+    - name: install mariadb-test on prod nodes
+      yum:
+        name: mariadb-test
+        state: latest
+      when:
+        - inventory_hostname in groups['prod']
+...

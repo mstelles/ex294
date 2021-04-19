@@ -1,0 +1,20 @@
+---
+- hosts: all
+  become: true
+  gather_facts: false
+  tasks:
+    - name: format /dev/sda5
+      filesystem:
+        fstype: ext4
+        dev: /dev/sda5
+    - name: create /opt/tmp directory
+      file:
+        path: /opt/tmp
+        state: directory
+    - name: mount /dev/sda5 on /opt/tmp
+      mount:
+        path: /opt/tmp
+        src: /dev/sda5
+        fstype: ext4
+        state: mounted
+...
