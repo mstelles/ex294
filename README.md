@@ -19,7 +19,7 @@ Feel free to use if you like but don't take this as a course for the certificati
 
 - I used the 192.168.1.0/24 network on my tests and then added the appropriate mhost<num> entries in /etc/hosts.
 
-```
+```bash
 192.168.1.200  mhost_base
 192.168.1.201	mhost1
 192.168.1.202	mhost2
@@ -41,8 +41,9 @@ Feel free to use if you like but don't take this as a course for the certificati
     - The filter option will work only for second level variables and further values would be ignored. This only applies when running ad-hoc commands. During playbook execution this restriction doesn't exist.
 
 Ex:
+
 This will show the 'ansible_default_ipv4' dictionary.
-```
+```json
 $ ansible -b mhost1 -m setup -a 'gather_subset=network filter=ansible_default_ipv4'
 mhost1 | SUCCESS => {
     "ansible_facts": {
@@ -65,7 +66,7 @@ mhost1 | SUCCESS => {
 ```
 
 This won't return any fact.
-```
+```json
 $ ansible -b mhost1 -m setup -a 'gather_subset=network filter=ansible_default_ipv4.address'
 mhost1 | SUCCESS => {
     "ansible_facts": {
@@ -89,10 +90,10 @@ mhost1 | SUCCESS => {
   - Default module must be "command"
   - Ansible should start 5 forks
 
-Solution: ansible.cfg
-Test:
-```
-ansible --version (check the 'config file' line)
+Solution: [ansible.cfg](ansible.cfg)
+Test (check the 'config file' line):
+```bash
+$ ansible --version
 ```
 
 #### 2. Create mnodes inventory file as follows:
@@ -103,12 +104,12 @@ ansible --version (check the 'config file' line)
   - group linux should include all managed hosts
 
 Test:
-```
-ansible --list prod
-ansible --list webservers
-ansible --list linux
-ansible --list all
-ansible -u root -k -m ping all -o
+```bash
+$ ansible --list prod
+$ ansible --list webservers
+$ ansible --list linux
+$ ansible --list all
+$ ansible -u root -k -m ping all -o
 ```
 
 #### 3. Configure mhost4 to listen on non-default ssh port 555
@@ -116,21 +117,21 @@ ansible -u root -k -m ping all -o
   - update the inventory file to tell ansible to use port 555 to mhost4
 
 Solution:
-```
-ansible -u root -k mhost4 -m lineinfile -a "path=/etc/ssh/sshd_config regexp='^#Port 22' line='Port 555'" 
-ansible -u root -k mhost4 -m firewalld -a "port=555/tcp permanent=true immediate=true state=enabled"
-ansible -u root -k mhost4 -m seport -a "ports=555 proto=tcp setype=ssh_port_t state=present"
+```bash
+$ ansible -u root -k mhost4 -m lineinfile -a "path=/etc/ssh/sshd_config regexp='^#Port 22' line='Port 555'" 
+$ ansible -u root -k mhost4 -m firewalld -a "port=555/tcp permanent=true immediate=true state=enabled"
+$ ansible -u root -k mhost4 -m seport -a "ports=555 proto=tcp setype=ssh_port_t state=present"
 ```
 
 Change the inventory file adding on the end of the mhost4 line 'ansible_port=555'
 
 Test:
-```
-ansible -u root -k -m ping all -o
+```bash
+$ ansible -u root -k -m ping all -o
 ```
 
 Usefull commands that can be used to troubleshoot:
-```
+```bash
 firewall-cmd --list-ports
 semanage port -l
 semanage port -a -t ssh_port_t -p tcp 555
@@ -140,23 +141,23 @@ semanage port -d -p tcp 555
 #### 4. Create ansible user and distribute ssh key using ad-hoc commands
   - use ad-hoc command to create user ansible on all managed nodes (password '123')
   - create a key pair (if you don't already have one)
-```
+```bash
 ssh-keygen -t rsa
 ```
   - copy the pub key to the managed nodes
   - add user to sudoers file, allowing privilege escalation
 
 Solution:
-```
-ansible -u root -k all -m user -a "name=ansible password='{{'123' | password_hash('sha512')}}'"
-ansible -u root -k all -m authorized_key -a "user=ansible state=present key='{{ lookup('file', '/home/ansible/.ssh/id_rsa.pub') }}'"
+```bash
+$ ansible -u root -k all -m user -a "name=ansible password='{{'123' | password_hash('sha512')}}'"
+$ ansible -u root -k all -m authorized_key -a "user=ansible state=present key='{{ lookup('file', '/home/ansible/.ssh/id_rsa.pub') }}'"
 OBS.: Another option to copy the key would be to use the 'copy' module
-ansible -u root -k all -m lineinfile -a "path=/etc/sudoers insertbefore='## Read drop-in' line='ansible ALL=(ALL) NOPASSWD: ALL'"
+$ ansible -u root -k all -m lineinfile -a "path=/etc/sudoers insertbefore='## Read drop-in' line='ansible ALL=(ALL) NOPASSWD: ALL'"
 ```
 
 Test:
-```
-ansible -m ping all -o
+```bash
+$ ansible -m ping all -o
 ```
 
 --- from this point onwards, use 'ansible' user
@@ -169,13 +170,13 @@ Ansible managed host
 
 Solution:
 a. Using the lineinfile module
-```
-ansible -b -m lineinfile -a "path=/etc/motd line='Ansible managed host'"
+```bash
+$ ansible -b -m lineinfile -a "path=/etc/motd line='Ansible managed host'"
 ```
 
 b. Using the copy module
-```
-ansible -b -m copy -a "dest=/etc/motd content='Ansible managed host'"
+```bash
+$ ansible -b -m copy -a "dest=/etc/motd content='Ansible managed host'"
 ```
 
 #### 6. Configure managed hosts to use BaseOS and AppStream yum repos with ad-hoc commands (disable gpg check)
@@ -184,10 +185,10 @@ ansible -b -m copy -a "dest=/etc/motd content='Ansible managed host'"
   - Repo 2: name "AppStream", description "DNF AppStream Repo", baseurl "file:///srv/AppStream", gpgcheck "1", gpgkey "/etc/pki/rpm-gpg/RPM-GPG-KEY-centosofficial", enabled "1"
 
 Solution:
-```
-ansible all -b -m mount -a "path=/srv src=/dev/cdrom fstype=iso9660 state=mounted"
-ansible all -b -m yum_repository -a "name='BaseOS' description='DNF BaseOS repo' baseurl='file:///srv/BaseOS' gpgcheck='1' gpgkey='/etc/pki/rpm-gpg/RPM-GPG-KEY-centosofficial' enabled='1'"
-ansible all -b -m yum_repository -a "name='AppStream' description='DNF AppStream repo' baseurl='file:///srv/AppStream' gpgcheck='1' gpgkey='/etc/pki/rpm-gpg/RPM-GPG-KEY-centosofficial' enabled='1'"
+```bash
+$ ansible all -b -m mount -a "path=/srv src=/dev/cdrom fstype=iso9660 state=mounted"
+$ ansible all -b -m yum_repository -a "name='BaseOS' description='DNF BaseOS repo' baseurl='file:///srv/BaseOS' gpgcheck='1' gpgkey='/etc/pki/rpm-gpg/RPM-GPG-KEY-centosofficial' enabled='1'"
+$ ansible all -b -m yum_repository -a "name='AppStream' description='DNF AppStream repo' baseurl='file:///srv/AppStream' gpgcheck='1' gpgkey='/etc/pki/rpm-gpg/RPM-GPG-KEY-centosofficial' enabled='1'"
 ```
 
 #### - Tasks using playbooks and ad-hoc commands
@@ -197,23 +198,23 @@ ansible all -b -m yum_repository -a "name='AppStream' description='DNF AppStream
   - Install, start and enable mariadb on prod;
 
 Solution: playbooks/services.yaml
-```
-ansible-playbook playbooks/services.yaml --syntax-check
-ansible-playbook playbooks/services.yaml
+```bash
+$ ansible-playbook playbooks/services.yaml --syntax-check
+$ ansible-playbook playbooks/services.yaml
 ```
 
 Test: As we didn't allow inbout http traffic yet, tests should be executed from within each host.
 
 a. testing webservers
-```
-ansible webservers -m uri -a "url=http://localhost"
-ansible -b webservers m shell -a 'ss -natp | grep *:80'
+```bash
+$ ansible webservers -m uri -a "url=http://localhost"
+$ ansible -b webservers m shell -a 'ss -natp | grep *:80'
 ```
 
 b. testing db servers
-```
-ansible -b prod m shell -a 'ss -natp | grep *:3306'
-ansible prod -o -m mysql_info -a "login_user=root filter=version"
+```bash
+$ ansible -b prod m shell -a 'ss -natp | grep *:3306'
+$ ansible prod -o -m mysql_info -a "login_user=root filter=version"
 ```
 OBS.: to use the mysql_info module, you must have PyMySQL installed on the nodes
 
@@ -221,9 +222,9 @@ OBS.: to use the mysql_info module, you must have PyMySQL installed on the nodes
   - Username 'mark', password 'password', sha512
 
 Solution: playbooks/mark_user.yaml
-```
-ansible-playbook playbooks/mark_user.yaml --syntax-check
-ansible-playbook playbooks/mark_user.yaml
+```bash
+$ ansible-playbook playbooks/mark_user.yaml --syntax-check
+$ ansible-playbook playbooks/mark_user.yaml
 ```
 
 #### 9. Create the 'mark_file.yaml' playbook that will create the '/root/mark_file' in all managed nodes
@@ -232,14 +233,14 @@ ansible-playbook playbooks/mark_user.yaml
   - Set gid bit
 
 Solution: playbooks/mark_file.yaml
-```
-ansible-playbook playbooks/mark_file.yaml --syntax-check
-ansible-playbook playbooks/mark_file.yaml
+```bash
+$ ansible-playbook playbooks/mark_file.yaml --syntax-check
+$ ansible-playbook playbooks/mark_file.yaml
 ```
 
 Tests:
-```
-ansible -b all -a 'ls -l /root/mark_file'
+```bash
+$ ansible -b all -a 'ls -l /root/mark_file'
 ```
 
 #### 10. Create the '/root/file1.txt' file with ad-hoc command on all managed nodes
@@ -247,14 +248,14 @@ ansible -b all -a 'ls -l /root/mark_file'
   - Remove all permissions for others on the file
 
 Solution:
-```
-ansible -b -m copy -a "dest=/root/file1.txt content='This file was created with Ansible' mode=o-rwx" all
+```bash
+$ ansible -b -m copy -a "dest=/root/file1.txt content='This file was created with Ansible' mode=o-rwx" all
 ```
 
 Tests:
-```
-ansible -b -a "ls -l /root/file1.txt"
-ansible -b -a "cat /root/file1.txt"
+```bash
+$ ansible -b -a "ls -l /root/file1.txt"
+$ ansible -b -a "cat /root/file1.txt"
 ```
 
 #### 11. Create the 'archive.yaml' playbook to:
@@ -264,14 +265,14 @@ ansible -b -a "cat /root/file1.txt"
   - Copy the files to the local /tmp directory on the ansible controler
 
 Solution: playbooks/archive.yaml
-```
-ansible-playbook playbooks/archive.yaml --syntax-check
-ansible-playbook playbooks/archive.yaml
+```bash
+$ ansible-playbook playbooks/archive.yaml --syntax-check
+$ ansible-playbook playbooks/archive.yaml
 ```
 
 Tests:
 On the local machine (ansible controler node), execute:
-```
+```bash
 ls -l /tmp/*etc.tar.bz2
 ```
 
@@ -280,29 +281,29 @@ ls -l /tmp/*etc.tar.bz2
   - Restart rsyslog service at 2h on webservers on every monday
 
 Solution: playbooks/cronjobs.yaml
-```
-ansible-playbook playbooks/cronjobs.yaml --syntax-check
-ansible-playbook playbooks/cronjobs.yaml
+```bash
+$ ansible-playbook playbooks/cronjobs.yaml --syntax-check
+$ ansible-playbook playbooks/cronjobs.yaml
 ```
 
 Alternative solution using magic variables with conditionals: playbooks/cronjobs_magicvars.yaml
 
 Tests:
-```
-ansible -b all -a 'crontab -l'
+```bash
+$ ansible -b all -a 'crontab -l'
 ```
 
 #### 13. Create the 'update_prod1.yaml' playbook to update all packages on prod1 node
 
 Solution: playbooks/update_prod1.yaml
-```
-ansible-playbook playbooks/update_prod1.yaml --syntax-check
-ansible-playbook playbooks/update_prod1.yaml
+```bash
+$ ansible-playbook playbooks/update_prod1.yaml --syntax-check
+$ ansible-playbook playbooks/update_prod1.yaml
 ```
 
 Tests:
-```
-ansible -b all -a 'crontab -l'
+```bash
+$ ansible -b all -a 'crontab -l'
 ```
 
 #### 14. Create the 'http_configs.yaml' playbook to:
@@ -315,16 +316,16 @@ ansible -b all -a 'crontab -l'
   - Playbook should be executed on webservers only
 
 Solution: playbooks/httpd_configs.yaml
-```
-ansible-playbook playbooks/httpd_configs.yaml --syntax-check
-ansible-playbook playbooks/httpd_configs.yaml 
+```bash
+$ ansible-playbook playbooks/httpd_configs.yaml --syntax-check
+$ ansible-playbook playbooks/httpd_configs.yaml 
 ```
 
 Tests:
-```
+```bash
 curl http://mhost3
 curl http://mhost3
-ansible webservers -b -a 'ls -lZd /var/web'
+$ ansible webservers -b -a 'ls -lZd /var/web'
 ```
 
 #### 15. Create the 'create_testing_networks_groups.yaml' playbook to perform the below tasks:
@@ -333,15 +334,15 @@ ansible webservers -b -a 'ls -lZd /var/web'
   - Use magic variables to diferentiate between the groups
 
 Solution: playbooks/create_testing_networks_groups.yaml
-```
-ansible-playbook playbooks/create_testing_networks_groups.yaml --syntax-check
-ansible-playbook playbooks/create_testing_networks_groups.yaml 
+```bash
+$ ansible-playbook playbooks/create_testing_networks_groups.yaml --syntax-check
+$ ansible-playbook playbooks/create_testing_networks_groups.yaml 
 ```
 
 Tests:
-```
-ansible prod -a 'grep ^networks\: /etc/group'
-ansible webservers -a 'grep ^testing\: /etc/group'
+```bash
+$ ansible prod -a 'grep ^networks\: /etc/group'
+$ ansible webservers -a 'grep ^testing\: /etc/group'
 ```
 
 #### 16. Create the 'parted.yaml' playbook to:
@@ -351,15 +352,15 @@ ansible webservers -a 'grep ^testing\: /etc/group'
   - Format this partion as ext4
 
 Solution: playbooks/parted.yaml
-```
-ansible-playbook playbooks/parted.yaml --syntax-check
-ansible-playbook playbooks/parted.yaml
+```bash
+$ ansible-playbook playbooks/parted.yaml --syntax-check
+$ ansible-playbook playbooks/parted.yaml
 ```
 
 Tests:
-```
-ansible -b -m shell -a 'dumpe2fs /dev/sda5 | head -1 || echo "invalid fs"' all
-ansible -b -m parted -a 'device=/dev/sda5 unit=MiB' all
+```bash
+$ ansible -b -m shell -a 'dumpe2fs /dev/sda5 | head -1 || echo "invalid fs"' all
+$ ansible -b -m parted -a 'device=/dev/sda5 unit=MiB' all
 ```
 #### 17. Create the 'mount.yaml' playbook to:
   - Format the '/dev/sda5' device with 'ext4' fs
