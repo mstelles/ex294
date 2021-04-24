@@ -1,0 +1,24 @@
+---
+- hosts: all
+  become: true
+  gather_facts: true
+  tasks:
+    - name: create the mount point
+      file:
+        path: "/volume/lvm"
+        state: directory
+    - name: the xfs filesystem on the volume
+      filesystem:
+        dev: /dev/vgroup/vol
+        fstype: xfs
+      when:
+        - "'vol' in ansible_facts['lvm']['lvs']"
+    - name: mount the filesystem on /volume/lvm
+      mount:
+        path: /volume/lvm
+        src: /dev/vgroup/vol
+        fstype: xfs
+        state: mounted
+      when:
+        - "'vol' in ansible_facts['lvm']['lvs']"
+...

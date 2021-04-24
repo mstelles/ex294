@@ -1,0 +1,28 @@
+---
+- hosts: all
+  become: true
+  gather_facts: true
+  tasks:
+    - name: create 800MiB logical volume if volume has more than 800MiB available
+      lvol:
+        lv: "lvm"
+        vg: "vgroup"
+        size: 800m
+        state: present
+      when:
+        - "'vgroup' in ansible_facts['lvm']['vgs']"
+        - ansible_facts['lvm']['vgs']['vgroup']['size_g'] > '0.80'
+    - name: create 500MiB logical volume if volume has less than 800MiB available
+      lvol:
+        lv: "lvm"
+        vg: "vgroup"
+        size: 500m
+        state: present
+      when:
+        - "'vgroup' in ansible_facts['lvm']['vgs']"
+        - ansible_facts['lvm']['vgs']['vgroup']['size_g'] < '0.80'
+    - name: display message for hosts which wont have the vgroup volume group
+      debug:
+        msg: "vgroup does not exist on host {{inventory_hostname}}"
+      when: "'vgroup' not in ansible_facts['lvm']['vgs']"
+...

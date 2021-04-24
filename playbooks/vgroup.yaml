@@ -1,0 +1,44 @@
+---
+- hosts: all
+  become: true
+  gather_facts: true
+  tasks:
+    - name: install lvm2 on the nodes
+      yum:
+        name: lvm2
+        state: latest
+    - name: get device info
+      parted:
+        device: /dev/sda
+        unit: MiB
+      register: sda_info
+    - name: create 1GiB logical partition on webservers
+      parted:
+        device: /dev/sda
+        flags: [ lvm ]
+        number: "6"
+        part_start: "{{sda_info.partitions[4].end + 1}}MiB"
+        part_end: "{{sda_info.partitions[4].end + 1025}}MiB"
+        part_type: logical
+        state: present
+        unit: MiB
+      when:
+        - inventory_hostname in groups['webservers']
+    - name: create 600MiB logical partition on prod1
+      parted:
+        device: /dev/sda
+        flags: [ lvm ]
+        number: "6"
+        part_start: "{{sda_info.partitions[4].end + 1}}MiB"
+        part_end: "{{sda_info.partitions[4].end + 601}}MiB"
+        part_type: logical
+        state: present
+      when:
+        - inventory_hostname in groups['prod1']
+    - name: create volume group
+      lvg:
+        vg: vgroup
+        pvs: /dev/sda6
+      when:
+        - "inventory_hostname in groups['prod1'] or inventory_hostname in groups['webservers']"
+...

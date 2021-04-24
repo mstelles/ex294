@@ -516,10 +516,25 @@ $ ansible-playbook playbooks/create_users.yaml
 Tests: try to login to the nodes using the created users accordingly
 
 #### 24. Create the 'vgroup.yaml' playbook to:
-  - Install lvm2 package on all nodes
-  - Create a logical partition of size 1GiB on webservers
-  - Create a logical partition of size 600MiB on prod1 nodes
-  - Create a volume group with name 'vgroup' using the mentioned partitions
+  - Install lvm2 package on all nodes.
+  - webservers: Create a 1GiB logical partition.
+  - prod1 nodes: create a 600MiB logical partition.
+  - On webservers and prod1 nodes, create the 'vgroup' volume group with using the newly created partition.
+  - Use conditionals to select the appropriate nodes.
+
+Solution: [vgroup.yaml](playbooks/vgroup.yaml)
+
+```bash
+$ ansible-playbook playbooks/vgroup.yaml --syntax-check
+$ ansible-playbook playbooks/vgroup.yaml
+```
+
+Tests: 
+```bash
+ansible -b -m shell -a 'fdisk -l /dev/sda | tail -1'
+ansible -b -a 'vgscan' all
+ansible -b -a 'vgdisplay' all
+```
 
 #### 25. Create the 'logvol.yaml' playbook to:
   - Create logical volume of size 800MiB if vgroup has enough free space (> 800MiB)
@@ -528,14 +543,47 @@ Tests: try to login to the nodes using the created users accordingly
   - Message 'vol group does not exist' should be displayed if vgroup wasn't created on node
   - Use 'lvs' with ansible ad-hoc commands to verify.
 
+Solution: [logvol.yaml](playbooks/logvol.yaml)
+
+```bash
+$ ansible-playbook playbooks/logvol.yaml --syntax-check
+$ ansible-playbook playbooks/logvol.yaml
+```
+
+Tests: 
+```bash
+ansible -b -a 'lvscan' all
+```
+
 #### 26. Create the 'volume.yaml' playbook to:
   - Create a logical volume with name 'vol' on managed nodes, using the remaining space on vgroup
   - Display 'vgroup does not exist' in case the vg wasn't created on a given node
 
-#### 27. Create the 'mount_vol.yaml' playbook to:
-  - Create a xfs filesystem on lv 'vol'.
-  - Mount it on '/volume/lvm' (create the mount point as well), in a persistent way.
+Solution: [volume.yaml](playbooks/volume.yaml)
 
-lvscan
-vgscan
-vgdisplay
+```bash
+$ ansible-playbook playbooks/volume.yaml --syntax-check
+$ ansible-playbook playbooks/volume.yaml
+```
+
+Tests: 
+```bash
+ansible -b -a 'lvscan' all
+```
+
+#### 27. Create the 'mount_vol.yaml' playbook to:
+  - Create the '/volume/lvm' directory to serve as mount point.
+  - Create a xfs filesystem on lv 'vol'.
+  - Mount it on '/volume/lvm', in a persistent way.
+
+Solution: [mount_vol.yaml](playbooks/mount_vol.yaml)
+
+```bash
+$ ansible-playbook playbooks/mount_vol.yaml --syntax-check
+$ ansible-playbook playbooks/mount_vol.yaml
+```
+
+Tests: 
+```bash
+ansible -a 'df /volume/lvm' all
+```

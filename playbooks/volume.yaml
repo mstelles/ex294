@@ -1,0 +1,18 @@
+---
+- hosts: all
+  become: true
+  gather_facts: true
+  tasks:
+    - name: create logical volume with all available space on disk
+      lvol:
+        lv: vol
+        vg: vgroup
+        size: 100%FREE
+      when: 
+        - "'vgroup' in ansible_facts['lvm']['vgs']"
+    - name: display message for hosts without vgroup
+      debug:
+        msg: "no vgroup found on {{inventory_hostname}}"
+      when:
+        - "'vgroup' not in ansible_facts['lvm']['vgs']"
+...
