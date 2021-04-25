@@ -47,8 +47,8 @@ Feel free to use if you like but don't take this as a course for the certificati
     - --list-tasks
 
 Ex:
-
 This will show the 'ansible_default_ipv4' dictionary.
+
 ```json
 $ ansible -b mhost1 -m setup -a 'gather_subset=network filter=ansible_default_ipv4'
 mhost1 | SUCCESS => {
@@ -84,12 +84,10 @@ mhost1 | SUCCESS => {
 
 ### ========== tasks ==========
 
---- using the root user
-
 #### 1. Create ansible.cfg:
   - Must be in "tasks" dir, inside ~ansible
-  - Roles path should be ~ansible/tasks/roles and default path should also be considered
-  - Inventory file should be ~ansible/tasks/mnodes
+  - Roles path should be ```bash ~ansible/tasks/roles``` and default path should also be considered
+  - Inventory file should be ```bash ~ansible/tasks/mnodes ```
   - Remote port 22 for SSH connection
   - User ansible should be used to connect to remote hosts
   - Privilege escalation must be disabled
@@ -122,6 +120,8 @@ $ ansible -u root -k -m ping all -o
 ```
 
 #### - Tasks using only ad-hoc commands
+
+--- using the root user (-u root on ansible ad-hoc commands)
 
 #### 3. Configure mhost4 to listen on non-default ssh port 555
   - ansible should connect to the other hosts on port 22
@@ -165,7 +165,7 @@ $ ansible -u root -k all -m authorized_key -a "user=ansible state=present key='{
 ```
 OBS.: Another option to copy the key would be to use the 'copy' module
 ```bash
-$ ansible -u root -k all -m lineinfile -a "path=/etc/sudoers insertbefore='## Read drop-in' line='ansible ALL=(ALL) NOPASSWD: ALL'"
+$ ansible -u root -k all -m copy -a "dest=/home/ansible/.ssh/id_rsa.pub src=/home/ansible/.ssh/id_rsa.pub mode='0400'"
 ```
 
 Test:
@@ -204,7 +204,7 @@ $ ansible all -b -m yum_repository -a "name='AppStream' description='DNF AppStre
 
 #### - Tasks using playbooks and ad-hoc commands
 
-#### 7. Create a playbook name 'services.yaml' to:
+#### 7. Create the 'services.yaml' playbook to:
   - Install, start and enable httpd on webservers;
   - Install, start and enable mariadb on prod;
 
@@ -229,32 +229,32 @@ $ ansible prod -o -m mysql_info -a "login_user=root filter=version"
 ```
 OBS.: to use the mysql_info module, you must have PyMySQL installed on the nodes
 
-#### 8. Create a user on all managed nodes via playbook (mark_user.yaml)
-  - Username 'mark', password 'password', sha512
+#### 8. Create a user on all managed nodes via playbook (user01_user.yaml)
+  - Username 'user01', password 'password', sha512
 
-Solution: [mark_user.yaml](playbooks/mark_user.yaml)
+Solution: [user01_user.yaml](playbooks/user01_user.yaml)
 ```bash
-$ ansible-playbook playbooks/mark_user.yaml --syntax-check
-$ ansible-playbook playbooks/mark_user.yaml
+$ ansible-playbook playbooks/user01_user.yaml --syntax-check
+$ ansible-playbook playbooks/user01_user.yaml
 ```
 
-#### 9. Create the 'mark_file.yaml' playbook that will create the '/root/mark_file' in all managed nodes
-  - User and group should be set to mark
+#### 9. Create the 'user01_file.yaml' playbook that will create the ```bash /root/user01_file``` in all managed nodes
+  - User and group should be set to user01
   - User rwx, group rw, others no permission
   - Set gid bit
 
-Solution: [mark_file.yaml](playbooks/mark_file.yaml)
+Solution: [user01_file.yaml](playbooks/user01_file.yaml)
 ```bash
-$ ansible-playbook playbooks/mark_file.yaml --syntax-check
-$ ansible-playbook playbooks/mark_file.yaml
+$ ansible-playbook playbooks/user01_file.yaml --syntax-check
+$ ansible-playbook playbooks/user01_file.yaml
 ```
 
 Tests:
 ```bash
-$ ansible -b all -a 'ls -l /root/mark_file'
+$ ansible -b all -a 'ls -l /root/user01_file'
 ```
 
-#### 10. Create the '/root/file1.txt' file with ad-hoc command on all managed nodes
+#### 10. Create the ```bash /root/file1.txt``` file with ad-hoc command on all managed nodes
   - Content of the file: 'This file was created with Ansible'
   - Remove all permissions for others on the file
 
@@ -270,10 +270,10 @@ $ ansible -b -a "cat /root/file1.txt"
 ```
 
 #### 11. Create the 'archive.yaml' playbook to:
-  - Execute playbook on webservers
-  - Archive the contents of /etc in /root/etc-<hostname>.tar.bz2 you may use ansible_facts or magic variables (I'm the second option)
-  - Compress with bzip2
-  - Copy the files to the local /tmp directory on the ansible controler
+  - Execute playbook on webservers.
+  - Archive the contents of /etc in ```bash /root/etc-<hostname>.tar.bz2 ```you may use ansible_facts or magic variables (I'm using the second option).
+  - Compress with bzip2.
+  - Copy the files to the local /tmp directory on the ansible controler.
 
 Solution: [archive.yaml](playbooks/archive.yaml)
 ```bash
