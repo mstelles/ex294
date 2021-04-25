@@ -1,0 +1,11 @@
+---
+- hosts: all
+  become: true
+  gather_facts: false
+  tasks:
+    - name: create user user01 on all managed nodes
+      user:
+        name: user01
+        state: present
+        password: "{{ '123' | password_hash('sha512') }}"
+...

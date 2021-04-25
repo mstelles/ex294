@@ -86,8 +86,8 @@ mhost1 | SUCCESS => {
 
 #### 1. Create ansible.cfg:
   - Must be in "tasks" dir, inside ~ansible
-  - Roles path should be ```bash ~ansible/tasks/roles``` and default path should also be considered
-  - Inventory file should be ```bash ~ansible/tasks/mnodes ```
+  - Roles path should be ```~ansible/tasks/roles``` and default path should also be considered
+  - Inventory file should be ```~ansible/tasks/mnodes```
   - Remote port 22 for SSH connection
   - User ansible should be used to connect to remote hosts
   - Privilege escalation must be disabled

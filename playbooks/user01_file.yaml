@@ -1,0 +1,13 @@
+---
+- hosts: all
+  become: true
+  gather_facts: false
+  tasks:
+    - name: create /root/user01_file
+      file:
+        path: /root/user01_file
+        mode: "2750"
+        owner: "user01"
+        group: "user01"
+        state: touch
+...
