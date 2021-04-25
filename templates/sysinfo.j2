@@ -1,0 +1,9 @@
+{# collect information to generate report -#}
+{% for mnode in ansible_play_batch -%}
+  {{ mnode }}
+  Hostname: {{ hostvars[mnode]['ansible_facts']['hostname'] }}
+  vgroup size: {{ hostvars[mnode]['ansible_facts']['lvm']['vgs']['vgroup']['size_g'] | default('vgroup not present') }}
+  vgroup free: {{ hostvars[mnode]['ansible_facts']['lvm']['vgs']['vgroup']['free_g'] | default('vgroup not present') }}
+  lvm size: {{ hostvars[mnode]['ansible_facts']['lvm']['lvs']['lvm'] | default('lvm not present') }}
+  Ansible OS family: {{ hostvars[mnode]['ansible_facts']['os_family'] }}
+{% endfor -%}

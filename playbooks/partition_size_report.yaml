@@ -1,0 +1,12 @@
+---
+- hosts: all
+  become: true
+  gather_facts: true
+  tasks:
+    - name: generate partition usage report
+      template:
+        src: ../templates/partition_size.j2
+        dest: /root/partition_size.txt
+      when:
+        - inventory_hostname in groups['prod2']
+...

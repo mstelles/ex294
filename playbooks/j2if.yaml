@@ -1,0 +1,17 @@
+---
+- hosts: all
+  become: false
+  gather_facts: false
+  tasks:
+    - name: display information based on group
+      debug:
+        msg: >
+          {# testing j2 if statement -#}
+          {% if inventory_hostname in groups['webservers'] -%}
+            {{ inventory_hostname }} is a Webserver
+          {% elif inventory_hostname in groups['prod1'] -%}
+            {{ inventory_hostname }} is part of prod1 group
+          {% else -%}
+            {{ inventory_hostname }} is part of some other group
+          {% endif -%}
+...

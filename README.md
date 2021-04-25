@@ -424,7 +424,7 @@ $ ansible all -k -u rhce -a 'id'
 ```
 
 #### 20. Create the ```motd_with_condition.yaml``` playbook to configure motd on:
-  - Set "hosts: all" in the play book as the selection must be made based on contitions.
+  - Set "hosts: all" in the playbook as the selection must be made based on contitions.
   - webservers with "This is a webserver node\n".
   - prod1 with "This is a prod1 node\n".
 
@@ -441,7 +441,7 @@ $ ansible all -a "grep 'This is a' /etc/motd"
 ```
 
 #### 21. Create the ```packages.yaml``` playbook to install:
-  - Set "hosts: all" in the play book as the selection should be made based on contitions.
+  - Set "hosts: all" in the playbook as the selection should be made based on contitions.
   - httpd-manual on webservers.
   - mariadb-test on prod nodes.
 
@@ -459,10 +459,10 @@ $ ansible all -a 'rpm -q httpd-manual'
 ```
 
 #### 22. Create the ```firewall_config.yaml``` playbook to:
+  - Set "hosts: all" in the playbook as the selection should be made based on contitions.
   - Configure webservers to accept https and ntp inbound traffic.
   - Configure prod nodes to accept traffic on port range 400-404/tcp and 3306/tcp.
   - Firewall rules should be persistent and service must be reloaded (don't use the immediate option on firewalld module).
-  - Set "hosts: all" in the play book as the selection should be made based on contitions.
 
 Solution: [firewall_config.yaml](playbooks/firewall_config.yaml)
 
@@ -588,4 +588,140 @@ $ ansible-playbook playbooks/mount_vol.yaml
 Tests: 
 ```bash
 ansible -a 'df /volume/lvm' all
+```
+
+#### - Some jinja2 theory
+
+
+### 28. Jinja2 if example.
+
+  - Create the ```j2if.yaml``` playbook with if, elif, else conditions to validade hosts in groups.
+  - Do not enclose variables on quotation marks, only the strings.
+
+Solution: [j2if.yaml](playbooks/j2if.yaml)
+
+```bash
+$ ansible-playbook playbooks/j2if.yaml --syntax-check
+$ ansible-playbook playbooks/j2if.yaml
+```
+
+### 29. Jinja2 for example.
+
+  - Create the ```j2for.yaml``` playbook to iterate over the hosts from the play.
+
+Solution: [j2for.yaml](playbooks/j2for.yaml)
+
+```bash
+$ ansible-playbook playbooks/j2for.yaml --syntax-check
+$ ansible-playbook playbooks/j2for.yaml
+```
+
+### 30. Create the ```host_list.yaml``` playbook to:
+  - Set "hosts: all" in the playbook as the selection should be made based on conditions.
+  - Create the ```/root/host_list.txt``` file on prod1 nodes with a list of all managed hosts.
+  - The playbook should use the ```host_list.j2``` template to generate this list.
+
+Solution: 
+  [host_list.yaml](playbooks/host_list.yaml)
+  [host_list.j2](templates/host_list.j2)
+
+```bash
+$ ansible-playbook playbooks/host_list.yaml --syntax-check
+$ ansible-playbook playbooks/host_list.yaml
+```
+
+Tests:
+```bash
+ansible -b -a 'cat /root/host_list.txt' prod1
+```
+
+### 31. Create the ```partition_size_report.yaml``` playbook to:
+  - Set "hosts: all" in the playbook as the selection should be made based on contitions.
+  - Collect partition size information and add it to the ```/root/partition_size.txt``` file on prod2 nodes.
+  - Each line should show the hostname to identify the host which the partition belongs.
+  - The playbook should use the ```partiton_size.j2``` template to get disk information.
+
+Solution: 
+  [partition_size.yaml](playbooks/partition_size.yaml)
+  [partition_size.j2](templates/partition_size.j2)
+
+```bash
+$ ansible-playbook playbooks/partition_size.yaml --syntax-check
+$ ansible-playbook playbooks/partition_size.yaml
+```
+
+Tests:
+```bash
+ansible -b -a 'cat /root/partition_size.txt' prod2
+```
+
+### 32. Create the ```etc_hosts.yaml``` playbook to:
+  - Execute on all managed nodes.
+  - Create appropriate entries for the hosts on ```/etc/hosts``` file.
+  - The playbook should use the ```etc_hosts.j2``` template.
+    - Use a for statement to loop through the hosts.
+    - Use a if statement to check if the interface is present on the managed nodes.
+
+Solution: 
+  [etc_hosts.yaml](playbooks/etc_hosts.yaml)
+  [etc_hosts.j2](templates/etc_hosts.j2)
+
+```bash
+$ ansible-playbook playbooks/etc_hosts.yaml --syntax-check
+$ ansible-playbook playbooks/etc_hosts.yaml
+```
+
+Tests:
+```bash
+ansible -b -a 'cat /etc/hosts' all
+```
+
+### 33. Create the ```sysinfo.yaml``` template to:
+  - Collect below details from managed nodes:
+    - hostname.
+    - size of vgroup.
+    - size of 'lvm' logical volume.
+    - Ansible OS family.
+  - Store the information on each remote node, in the ```/root/sysinfo-<hostname>.txt``` file.
+  - Use the ```sysinfo.j2``` template to gather the requested details.
+
+
+#### - Ansible vault theory
+
+##### Encrypt a variable and get it's value while executing the playbook
+
+  - Create the encrypted value for the variable.
+```bash
+$ ansible-vault encrypt_string --name '<var name>' '<password>' --ask-vault-pass
+```
+  - Copy the variable with the value. Ex.:
+```bash
+password: !vault |
+          $ANSIBLE_VAULT;1.1;AES256
+          32623463386364616635363132366566666235646565306633306432616434366162626464303866
+          3731666561303763663362313933336631303930303162650a303661323665336638636131316135
+          33383261653532653462376232646162343265383434626166383966303162626337626634346137
+          3866643431303363310a353733316632666630343838333763353965666362613866643135376333
+          3836
+```
+  - Create the ```vault_encrypt_var.yaml``` playbook, adding the variable with the encrypted value generated on the last step.
+  - Run the playbook providing the vault password used to generate the encrypted value for the variable.
+```bash
+$ ansible-playbook playbooks/vault_encrypt_var.yaml --ask-vault-pass
+```
+
+##### Encrypt a playbook and a variable inside the same playbook
+
+  - Encrypt the variable, adding an id to it.
+```bash
+$ ansible-vault encrypt_string --vault-id '<id name>'@prompt --name '<variable name>' '<password>'
+```
+  - Encrypt the playbook, ading a different id to it.
+```bash
+$ ansible-vault encrypt --vault-id '<id name>'@prompt '<playbook or file>'
+```
+
+  - Run the playbook:
+```bash
+ansible-playbook <playbook> --vault-id '<first id>'@prompt --vault-id '<second id>'@prompt
 ```

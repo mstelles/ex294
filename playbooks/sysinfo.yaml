@@ -1,0 +1,10 @@
+---
+- hosts: all
+  become: true
+  gather_facts: true
+  tasks:
+    - name: collect info and genereate a report on /root/sysinfo-<hostname>.txt file
+      template:
+        src: ../templates/sysinfo.j2
+        dest: /root/sysinfo-{{inventory_hostname}}.txt
+...

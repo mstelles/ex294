@@ -1,0 +1,13 @@
+---
+- hosts: all
+  become: false
+  gather_facts: false
+  tasks:
+    - name: iterate over the hosts on the play
+      debug:
+        msg: >
+          {# using jinja2 for statement to iterate over hosts from the play -#}
+          {% for mnode in ansible_play_batch -%}
+            Host: {{ hostvars[mnode]['inventory_hostname'] }}
+          {% endfor -%}
+...

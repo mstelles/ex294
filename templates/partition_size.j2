@@ -1,0 +1,10 @@
+{# generate partition usage report -#}
+{% for mnode in ansible_play_batch -%}
+  {% if ansible_facts['devices']['sda'] -%}
+    Host: {{ mnode }}
+    {% for part in hostvars[mnode]['ansible_facts']['devices']['sda']['partitions'] -%}
+      Partition: {{ part }}
+      Size: {{ hostvars[mnode]['ansible_facts']['devices']['sda']['partitions'][part]['size'] }}
+    {% endfor -%}
+  {% endif -%}
+{% endfor -%}

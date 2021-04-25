@@ -1,0 +1,10 @@
+---
+- hosts: all
+  become: true
+  gather_facts: true
+  tasks:
+    - name: generate /etc/hosts based on template
+      template:
+        src: ../templates/etc_hosts.j2
+        dest: /tmp/hosts-new
+...

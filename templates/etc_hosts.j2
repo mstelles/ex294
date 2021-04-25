@@ -1,0 +1,9 @@
+{# generate /etc/hosts using jinja2 structure and ansible_facts -#}
+# managed by Ansible
+# wadda wadda wadda wadda wadda
+127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4
+::1         localhost localhost.localdomain localhost6 localhost6.localdomain6
+
+{% for mnode in ansible_play_batch -%}
+  {{ hostvars[mnode]['ansible_facts']['default_ipv4']['address'] }}     {{ mnode }}.lab     {{ mnode }}
+{% endfor -%}

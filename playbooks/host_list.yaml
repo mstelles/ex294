@@ -1,0 +1,12 @@
+---
+- hosts: all
+  become: true
+  gather_facts: true
+  tasks:
+    - name: generate a list of all nodes and store it on prod1 nodes, /root/host_list.txt
+      template:
+        src: ../templates/host_list.j2
+        dest: /root/host_list.txt
+      when:
+        - inventory_hostname in groups['prod1']
+...

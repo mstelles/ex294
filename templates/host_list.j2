@@ -1,0 +1,4 @@
+{# generate a host list file -#}
+{% for mnode in ansible_play_batch -%}
+  Host: {{ hostvars[mnode]['ansible_facts']['hostname'] | default('requested variable does not exist') }}
+{% endfor -%}
