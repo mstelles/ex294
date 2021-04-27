@@ -5,8 +5,8 @@
   tasks:
     - name: generate partition usage report
       template:
-        src: ../templates/partition_size.j2
-        dest: /root/partition_size.txt
+        src: ../templates/partition_size_report.j2
+        dest: /root/partition_size_report.txt
       when:
         - inventory_hostname in groups['prod2']
 ...

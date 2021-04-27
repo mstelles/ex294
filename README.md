@@ -311,11 +311,6 @@ $ ansible-playbook playbooks/update_prod1.yaml --syntax-check
 $ ansible-playbook playbooks/update_prod1.yaml
 ```
 
-Tests:
-```bash
-$ ansible -b all -a 'crontab -l'
-```
-
 #### 14. Create the ```httpd_configs.yaml``` playbook to:
   - Change the httpd DocumentRoot directory from ```/var/www/html``` to ```/var/web/html```.
   - Set it's selinux context type to 'httpd_sys_content_t' (use the sefcontext module, making it persistent - 'ansible-doc sefcontext' for help).
@@ -533,9 +528,9 @@ $ ansible-playbook playbooks/vgroup.yaml
 
 Tests: 
 ```bash
-ansible -b -m shell -a 'fdisk -l /dev/sda | tail -1'
-ansible -b -a 'vgscan' all
-ansible -b -a 'vgdisplay' all
+$ ansible -b -m shell -a 'fdisk -l /dev/sda | tail -1'
+$ ansible -b -a 'vgscan' all
+$ ansible -b -a 'vgdisplay' all
 ```
 
 #### 25. Create the ```logvol.yaml``` playbook to:
@@ -554,7 +549,7 @@ $ ansible-playbook playbooks/logvol.yaml
 
 Tests: 
 ```bash
-ansible -b -a 'lvscan' all
+$ ansible -b -a 'lvscan' all
 ```
 
 #### 26. Create the ```volume.yaml``` playbook to:
@@ -570,7 +565,7 @@ $ ansible-playbook playbooks/volume.yaml
 
 Tests: 
 ```bash
-ansible -b -a 'lvscan' all
+$ ansible -b -a 'lvscan' all
 ```
 
 #### 27. Create the ```mount_vol.yaml``` playbook to:
@@ -587,7 +582,7 @@ $ ansible-playbook playbooks/mount_vol.yaml
 
 Tests: 
 ```bash
-ansible -a 'df /volume/lvm' all
+$ ansible -a 'df /volume/lvm' all
 ```
 
 #### - Some jinja2 theory
@@ -632,27 +627,27 @@ $ ansible-playbook playbooks/host_list.yaml
 
 Tests:
 ```bash
-ansible -b -a 'cat /root/host_list.txt' prod1
+$ ansible -b -a 'cat /root/host_list.txt' prod1
 ```
 
 ### 31. Create the ```partition_size_report.yaml``` playbook to:
   - Set "hosts: all" in the playbook as the selection should be made based on contitions.
-  - Collect partition size information and add it to the ```/root/partition_size.txt``` file on prod2 nodes.
+  - Collect partition size information and add it to the ```/root/partition_size_report.txt``` file on prod2 nodes.
   - Each line should show the hostname to identify the host which the partition belongs.
-  - The playbook should use the ```partiton_size.j2``` template to get disk information.
+  - The playbook should use the ```partiton_size_report.j2``` template to get disk information.
 
 Solution: 
-  [partition_size.yaml](playbooks/partition_size.yaml)
-  [partition_size.j2](templates/partition_size.j2)
+  [partition_size_report.yaml](playbooks/partition_size_report.yaml)
+  [partition_size_report.j2](templates/partition_size_report.j2)
 
 ```bash
-$ ansible-playbook playbooks/partition_size.yaml --syntax-check
-$ ansible-playbook playbooks/partition_size.yaml
+$ ansible-playbook playbooks/partition_size_report.yaml --syntax-check
+$ ansible-playbook playbooks/partition_size_report.yaml
 ```
 
 Tests:
 ```bash
-ansible -b -a 'cat /root/partition_size.txt' prod2
+$ ansible -b -a 'cat /root/partition_size_report.txt' prod2
 ```
 
 ### 32. Create the ```etc_hosts.yaml``` playbook to:
@@ -673,7 +668,7 @@ $ ansible-playbook playbooks/etc_hosts.yaml
 
 Tests:
 ```bash
-ansible -b -a 'cat /etc/hosts' all
+$ ansible -b -a 'cat /etc/hosts' all
 ```
 
 ### 33. Create the ```sysinfo.yaml``` template to:
@@ -723,5 +718,5 @@ $ ansible-vault encrypt --vault-id '<id name>'@prompt '<playbook or file>'
 
   - Run the playbook:
 ```bash
-ansible-playbook <playbook> --vault-id '<first id>'@prompt --vault-id '<second id>'@prompt
+$ ansible-playbook <playbook> --vault-id '<first id>'@prompt --vault-id '<second id>'@prompt
 ```
