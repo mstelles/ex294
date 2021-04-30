@@ -17,7 +17,7 @@
 
 Not sure why but well, that's how they do things.
 
-Feel free to use if you like but don't take this as a course for the certification.
+Feel free to use if you like but don't take this as a course for the certification. Probably what they want is to sell their 2k USD prep course, where they might give the "correct" answers for the test.
 
 ### ========== pre tasks ==========
 
