@@ -7,7 +7,7 @@
       debug:
         msg: >
           {# using jinja2 for statement to iterate over hosts from the play -#}
-          {% for mnode in ansible_play_batch -%}
+          {% for mnode in webservers.group -%}
             Host: {{ hostvars[mnode]['inventory_hostname'] }}
           {% endfor -%}
 ...

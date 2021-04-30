@@ -1,5 +1,22 @@
 ## Personal stuff created to prepare to my [EX294](https://www.redhat.com/en/services/training/ex294-red-hat-certified-engineer-rhce-exam-red-hat-enterprise-linux-8)  exam.
 
+## Disclaimer:
+- The tasks described below are on the same level of what you would find on the certification exam. Although I executed 95% of the test without problems and testing the applied configs, I didn't pass the exam and the only report received by them was:
+
+        OBJECTIVE: SCORE
+        Understand core components of Ansible: 59%
+        Install and configure Ansible: 100%
+        Run ad-hoc Ansible commands: 0%
+        Use Ansible modules for system administration tasks: 56%
+        Create Ansible plays and playbooks: 67%
+        Create and use templates to create customized configuration files: 100%
+        Work with Ansible variables and facts: 100%
+        Create and work with roles: 67%
+        Download and use roles with Ansible Galaxy: 0%
+        Use Ansible Vault in playbooks to protect sensitive data: 43%
+
+Not sure why but well, that's how they do things.
+
 Feel free to use if you like but don't take this as a course for the certification.
 
 ### ========== pre tasks ==========
@@ -680,6 +697,19 @@ $ ansible -b -a 'cat /etc/hosts' all
   - Store the information on each remote node, in the ```/root/sysinfo-<hostname>.txt``` file.
   - Use the ```sysinfo.j2``` template to gather the requested details.
 
+Solution: 
+  [sysinfo.yaml](playbooks/sysinfo.yaml)
+  [sysinfo.j2](templates/sysinfo.j2)
+
+```bash
+$ ansible-playbook playbooks/sysinfo.yaml --syntax-check
+$ ansible-playbook playbooks/sysinfo.yaml
+```
+
+Tests:
+```bash
+$ ansible -b -m shell -a 'cat /etc/sysinfo*' all
+```
 
 #### - Ansible vault theory
 
@@ -720,3 +750,67 @@ $ ansible-vault encrypt --vault-id '<id name>'@prompt '<playbook or file>'
 ```bash
 $ ansible-playbook <playbook> --vault-id '<first id>'@prompt --vault-id '<second id>'@prompt
 ```
+
+#### - Ansible roles and ansible-galaxy
+
+- Use the ```ansible-galaxy init <role name>``` command to create a default directory and files structure.
+
+- Downloading roles:
+  - ```ansible-galaxy install <user>.<role>```
+  - It's also possible to create a requirements file on YAML format to download several roles at once. Ex:
+
+```yaml
+- src: http://some/url/here/
+  version: master
+  name: role_name_in_disk
+- src: geerlingguy.apache
+  version: master
+  name: my_apache_role
+- src: geerlingguy.docker
+  version: master
+```
+  - Then execute ```ansible-galaxy install -r <requirements file>.yaml```
+  - To list the roles, execute ```ansible-galaxy list```
+
+##### linux system roles
+  - Install the rhel-system-roles package.
+  - Administrative roles will be placed under ```/usr/share/ansible/roles/``` directory.
+  - Example playbooks will be at ``/usr/share/doc/rhel-system-roles/``` directory.
+  - Example of roles on this package:
+    - network
+    - timesync
+    - storage
+    - selinux
+
+###### Using the ```timesync``` role to sync the nodes via ntp
+
+  - On control node, allow the service to receive requests from the nodes, adjusting ```/etc/chrony.conf``` file, on the below line.
+```bash
+allow 192.168.1.0/24 
+```
+
+  - Check if chronyd is enabled and running. If so, restart it.
+```bash 
+# systemctl restart chronyd
+```
+
+  - Check the execution of the daemon.
+```bash
+# chronyc sources -v
+```
+
+  - Make sure there's a firewall rule allowing the access to this service (port 123/udp) and if not, create the rule.
+```bash
+# firewall-cmd --list-ports
+# firewall-cmd --zone=public --add-port=123/udp --permanent
+# firewall-cmd --reload
+```
+
+OBS.: Of course all this could be done using ansible ad-hoc commands or even a simple playbook.
+
+  - Check on managed nodes the time and date configuration.
+```bash
+$ ansible all -a 'timedatectl status'
+```
+
+  - 
